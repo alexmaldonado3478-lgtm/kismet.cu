@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kismet - Conexiones de Alto Impacto</title>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        /* Contenedor principal centrado en forma de tarjeta tipo app */
+        .app-container {
+            width: 100%;
+            max-width: 440px;
+            height: 90vh;
+            max-height: 850px;
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        .view { 
+            display: none; 
+            padding: 20px; 
+            flex: 1; 
+            overflow-y: auto; 
+            padding-bottom: 80px; 
+        }
+        .view.active { display: block; animation: fadeIn 0.3s ease; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2, h3 { margin-top: 0; }
+        .text-accent { color: #818cf8; }
+        .text-muted { color: #94a3b8; font-size: 13px; }
+
+        .card {
+            background: #1f2937;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #374151;
+        }
+        input {
+            width: 100%; padding: 12px; margin-bottom: 10px;
+            border-radius: 8px; border: 1px solid #374151;
+            background: #0b0f19; color: white; box-sizing: border-box;
+            font-size: 14px; outline: none;
+        }
+        input:focus { border-color: #818cf8; }
+        
+        button.btn-main {
+            width: 100%; padding: 12px; background: #6366f1;
+            color: white; border: none; border-radius: 8px;
+            font-weight: bold; font-size: 14px; cursor: pointer;
+            transition: 0.2s;
+        }
+        button.btn-main:active { background: #4f46e5; transform: scale(0.98); }
+        button.btn-secondary {
+            background: #374151; color: #f8fafc; border: none;
+            padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px;
+        }
+        button.btn-success {
+            background: #10b981; color: white; border: none;
+            padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px;
+        }
+
+        .tag {
+            display: inline-block; background: #312e81; color: #c7d2fe;
+            padding: 2px 8px; border-radius: 20px; font-size: 11px;
+            margin: 2px; font-weight: 500;
+        }
+
+        /* Estilos de Chat Privado */
+        .chat-box {
+            flex: 1; height: 260px; overflow-y: auto; background: #0b0f19;
+            border: 1px solid #374151; border-radius: 10px; padding: 10px;
+            display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;
+        }
+        .chat-msg {
+            background: #1f2937; padding: 8px 12px; border-radius: 8px;
+            max-width: 80%; font-size: 13px; word-break: break-word;
+        }
+        .chat-msg.me { background: #4338ca; align-self: flex-end; }
+
+        /* Navegación inferior fija dentro de la tarjeta */
+        .bottom-nav {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: #0b0f19; border-top: 1px solid #1f2937;
+            display: flex; justify-content: space-around; padding: 10px 0;
+            display: none; z-index: 100;
+        }
+        .bottom-nav button {
+            background: none; border: none; color: #94a3b8;
+            font-size: 12px; cursor: pointer; display: flex;
+            flex-direction: column; align-items: center; gap: 2px;
+        }
+        .bottom-nav button:hover { color: #818cf8; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- 1. REGISTRO -->
+    <div id="view-register" class="view active">
+        <h2 style="text-align: center; font-size: 24px; margin-top: 20px;">✨ <span class="text-accent">Kismet</span></h2>
+        <div class="card" style="margin-top: 10px;">
+            <h3>Crea tu Perfil</h3>
+            <p class="text-muted">Conecta mediante solicitudes y chats privados.</p>
+            
+            <input type="text" id="reg-name" placeholder="Nombre completo" autocomplete="off" />
+            <input type="text" id="reg-username" placeholder="Username único (ej. @noe)" autocomplete="off" />
+            <div style="display: flex; gap: 8px;">
+                <input type="number" id="reg-age" placeholder="Edad" style="width: 40%;" />
+                <input type="text" id="reg-city" placeholder="Ciudad" style="width: 60%;" />
+            </div>
+            <input type="text" id="reg-interests" placeholder="Intereses (separados por coma)" autocomplete="off" />
+            
+            <button id="btn-register" class="btn-main" style="margin-top: 5px;">Unirme a Kismet</button>
+        </div>
+    </div>
+
+    <!-- 2. INICIO -->
+    <div id="view-home" class="view">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0; font-size: 20px;">✨ Kismet</h2>
+            <div style="background: #1f2937; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 1px solid #374151;">
+                👤 <span id="home-username-tag" class="text-accent">@usuario</span>
+            </div>
+        </header>
+        <div class="card" style="text-align: center; padding: 20px 14px; background: linear-gradient(145deg, #1f2937, #0b0f19);">
+            <h2>Red de Conexiones</h2>
+            <p class="text-muted">Explora la comunidad, envía solicitudes y chatea de forma privada.</p>
+            <button onclick="navigate('discover')" class="btn-main" style="margin-top: 10px;">Explorar Personas 🧭</button>
+        </div>
+    </div>
+
+    <!-- 3. DESCUBRIR -->
+    <div id="view-discover" class="view">
+        <h2 style="font-size: 20px;">🧭 Descubrir Perfiles</h2>
+        <p class="text-muted" style="margin-bottom: 12px;">Envía solicitudes de conexión.</p>
+        <div id="users-list">
+            <p style="text-align: center; color: #94a3b8;">Cargando perfiles...</p>
+        </div>
+    </div>
+
+    <!-- 4. SOLICITUDES -->
+    <div id="view-requests" class="view">
+        <h2 style="font-size: 20px;">📥 Solicitudes</h2>
+        <p class="text-muted" style="margin-bottom: 12px;">Acepta solicitudes para habilitar el chat.</p>
+        <div id="requests-list">
+            <p style="text-align: center; color: #94a3b8;">Buscando solicitudes...</p>
+        </div>
+    </div>
+
+    <!-- 5. CHATS PRIVADOS -->
+    <div id="view-chats" class="view">
+        <h2 style="font-size: 20px;">💬 Mis Chats</h2>
+        <p class="text-muted" style="margin-bottom: 12px;">Conversaciones privadas activas.</p>
+        <div id="chats-list">
+            <p style="text-align: center; color: #94a3b8;">Cargando chats...</p>
+        </div>
+    </div>
+
+    <!-- 6. SALA DE CHAT INDIVIDUAL -->
+    <div id="view-chatroom" class="view" style="display: flex; flex-direction: column;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <button onclick="navigate('chats')" class="btn-secondary">← Volver</button>
+            <h3 id="chatroom-title" style="margin: 0; color: #818cf8; font-size: 16px;">Chat Privado</h3>
+        </div>
+        
+        <div id="chatroom-messages" class="chat-box"></div>
+
+        <div style="display: flex; gap: 6px;">
+            <input type="text" id="chatroom-input" placeholder="Escribe un mensaje..." autocomplete="off" style="margin:0;" />
+            <button onclick="sendPrivateMessage()" class="btn-main" style="width: 70px; margin:0; padding: 10px;">Enviar</button>
+        </div>
+    </div>
+
+    <!-- NAVEGACIÓN INFERIOR -->
+    <nav id="bottom-nav" class="bottom-nav">
+        <button onclick="navigate('discover')">🧭<br>Descubrir</button>
+        <button onclick="navigate('requests')">📥<br>Solicitudes</button>
+        <button onclick="navigate('chats')">💬<br>Chats</button>
+        <button onclick="navigate('home')">🏠<br>Inicio</button>
+    </nav>
+
+</div>
+
+<!-- ================= LÓGICA FIREBASE ================= -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, query, where, serverTimestamp, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDZkG3vdqo-hI6tjEuzIstolkuKwXgnluE",
+        authDomain: "kismet211-cca1c.firebaseapp.com",
+        projectId: "kismet211-cca1c",
+        storageBucket: "kismet211-cca1c.firebasestorage.app",
+        messagingSenderId: "223828052665",
+        appId: "1:223828052665:web:374ffe2ec686c16d4a2968",
+        measurementId: "G-M0ESKSMK56"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let activeChatId = null;
+    let unsubscribeChatMsgs = null;
+
+    window.navigate = function(viewId) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-' + viewId).classList.add('active');
+        
+        const nav = document.getElementById('bottom-nav');
+        if (viewId === 'register') {
+            nav.style.display = 'none';
+        } else {
+            nav.style.display = 'flex';
+        }
+
+        if (unsubscribeChatMsgs && viewId !== 'chatroom') {
+            unsubscribeChatMsgs();
+            unsubscribeChatMsgs = null;
+        }
+
+        if (viewId === 'discover') loadDiscoverUsers();
+        if (viewId === 'requests') loadRequests();
+        if (viewId === 'chats') loadUserChats();
+    };
+
+    // Registro
+    document.getElementById('btn-register').addEventListener('click', async () => {
+        const name = document.getElementById('reg-name').value.trim();
+        const username = document.getElementById('reg-username').value.trim().toLowerCase();
+        const age = document.getElementById('reg-age').value.trim();
+        const city = document.getElementById('reg-city').value.trim();
+        const interestsRaw = document.getElementById('reg-interests').value.trim();
+
+        if (!name || !username) {
+            alert("Nombre y username son obligatorios.");
+            return;
+        }
+
+        const cleanUsername = username.startsWith('@') ? username : '@' + username;
+        const interests = interestsRaw ? interestsRaw.split(',').map(i => i.trim()).filter(i => i) : ["General"];
+
+        const btn = document.getElementById('btn-register');
+        btn.textContent = "Registrando...";
+
+        try {
+            await addDoc(collection(db, "users"), {
+                name, username: cleanUsername, age: age || "N/A", city: city || "Global", interests, createdAt: serverTimestamp()
+            });
+
+            const userSession = { name, username: cleanUsername };
+            localStorage.setItem('kismet_current_user', JSON.stringify(userSession));
+
+            document.getElementById('home-username-tag').textContent = cleanUsername;
+            window.navigate('home');
+        } catch (e) {
+            console.error(e);
+            alert("Error al registrarse.");
+            btn.textContent = "Unirme a Kismet";
+        }
+    });
+
+    // Descubrir usuarios
+    async function loadDiscoverUsers() {
+        const listEl = document.getElementById('users-list');
+        listEl.innerHTML = '<p style="text-align:center; color:#94a3b8;">Buscando perfiles...</p>';
+        const currentUser = JSON.parse(localStorage.getItem('kismet_current_user'));
+
+        try {
+            const querySnapshot = await getDocs(collection(db, "users"));
+            let html = "";
+            let count = 0;
+
+            querySnapshot.forEach(docSnap => {
+                const u = docSnap.data();
+                if (u.username === currentUser.username) return;
+                count++;
+
+                const tags = u.interests.map(t => `<span class="tag">${t}</span>`).join('');
+                html += `
+                    <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 style="margin: 0 0 2px 0; font-size: 15px;">${u.name} <span style="font-size: 11px; color: #818cf8;">${u.username}</span></h3>
+                            <p style="margin: 0 0 6px 0; color: #94a3b8; font-size: 11px;">📍 ${u.city} &bull; 🎂 ${u.age} años</p>
+                            <div>${tags}</div>
+                        </div>
+                        <button onclick="sendRequest('${u.username}', '${u.name}')" class="btn-main" style="width: auto; padding: 6px 10px; font-size: 12px;">Conectar</button>
+                    </div>
+                `;
+            });
+
+            listEl.innerHTML = count === 0 ? "<p style='text-align:center;'>No hay más usuarios.</p>" : html;
+        } catch (e) {
+            console.error(e);
+            listEl.innerHTML = "<p style='text-align:center; color: #ef4444;'>Error cargando perfiles.</p>";
+        }
+    }
+
+    window.sendRequest = async function(targetUsername, targetName) {
+        const currentUser = JSON.parse(localStorage.getItem('kismet_current_user'));
+        try {
+            await addDoc(collection(db, "friend_requests"), {
+                fromUser: currentUser.username,
+                fromName: currentUser.name,
+                toUser: targetUsername,
+                status: "pending",
+                createdAt: serverTimestamp()
+            });
+            alert(`¡Solicitud enviada a ${targetName}!`);
+        } catch (e) {
+            console.error(e);
+            alert("Error al enviar solicitud.");
+        }
+    };
+
+    // Solicitudes recibidas (Consulta segura optimizada)
+    async function loadRequests() {
+        const listEl = document.getElementById('requests-list');
+        listEl.innerHTML = '<p style="text-align:center; color:#94a3b8;">Buscando solicitudes...</p>';
+        const currentUser = JSON.parse(localStorage.getItem('kismet_current_user'));
+
+        try {
+            const q = query(collection(db, "friend_requests"), where("toUser", "==", currentUser.username));
+            const querySnapshot = await getDocs(q);
+            let html = "";
+            let count = 0;
+
+            querySnapshot.forEach(docSnap => {
+                const req = docSnap.data();
+                if (req.status !== "pending") return; // Filtrar pendientes de forma limpia
+                count++;
+                html += `
+                    <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 style="margin: 0 0 2px 0; font-size: 14px;">${req.fromName}</h3>
+                            <p style="margin: 0; color: #818cf8; font-size: 12px;">${req.fromUser}</p>
+                        </div>
+                        <button onclick="acceptRequest('${docSnap.id}', '${req.fromUser}', '${req.fromName}')" class="btn-success">Aceptar</button>
+                    </div>
+                `;
+            });
+
+            listEl.innerHTML = count === 0 ? "<p style='text-align:center;'>No hay solicitudes pendientes.</p>" : html;
+        } catch (e) {
+            console.error(e);
+            listEl.innerHTML = "<p style='text-align:center; color: #ef4444;'>Error cargando solicitudes.</p>";
+        }
+    }
+
+    window.acceptRequest = async function(reqId, fromUser, fromName) {
+        const currentUser = JSON.parse(localStorage.getItem('kismet_current_user'));
+        try {
+            await updateDoc(doc(db, "friend_requests", reqId), { status: "accepted" });
+
+            await addDoc(collection(db, "chats"), {
+                participants: [currentUser.username, fromUser],
+                participantNames: { [currentUser.username]: currentUser.name, [fromUser]: fromName },
+                createdAt: serverTimestamp()
+            });
+
+            alert(`¡Conectado con ${fromName}! Ya puedes chatear.`);
+            loadRequests();
+        } catch (e) {
+            console.error(e);
+            alert("Error al aceptar solicitud.");
+        }
+    };
+
+    // Chats activos (Consulta segura optimizada)
+    async function loadUserChats() {
+        const listEl = document.getElementById('chats-list');
+        listEl.innerHTML = '<p style="text-align:center; color:#94a3b8;">Cargando chats...</p>';
+        const currentUser = JSON.parse(localStorage.getItem('kismet_current_user'));
+
+        try {
+            const q = query(collection(db, "chats"), where("participants", "array-contains", currentUser.username));
+            const querySnapshot = await getDocs(q);
+            let html = "";
+            let count = 0;
+
+            querySnapshot.forEach(docSnap => {
+                const chat = docSnap.data();
+                count++;
+                const otherUser = chat.participants.find(p => p !== currentUser.username);
+                const otherName = chat.participantNames[otherUser] || otherUser;
+
+                html += `
+                    <div class="card" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="openChatRoom('${docSnap.id}', '${otherName}')">
+                        <div>
+                            <h3 style="margin: 0 0 2px 0; font-size: 14px;">💬 ${otherName}</h3>
+                            <p style="margin: 0; color: #818cf8; font-size: 11px;">${otherUser}</p>
+                        </div>
+                        <span style="color: #94a3b8; font-size: 12px;">Abrir →</span>
+                    </div>
+                `;
+            });
+
+            listEl.innerHTML = count === 0 ? "<p style='text-align:center;'>No tienes chats activos aún.</p>" : html;
+        } catch (e) {
+            console.error(e);
+            listEl.innerHTML = "<p style='text-align:center; color: #ef4444;'>Error cargando chats.</p>";
+        }
+    }
+
+    // Sala de Chat
+    window.openChatRoom = function(chatId, otherName) {
+        activeChatId = chatId;
+        document.getElementById('chatroom-title').textContent = `Chat con ${otherName}`;
+        navigate('chatroom');
+
+        const chatBox = document.getElementById('chatroom-messages');
+        chatBox.innerHTML = '<p style="text-align:center; color:#94a3b8; margin:auto;">Cargando mensajes...</p>';
+
+        const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"));
+        
+        if (unsubscribeChatMsgs) unsubscribeChatMsgs();
+
+        unsubscribeChatMsgs = onSnapshot(q, (snapshot) => {
+            const currentUser = JSON.parse(localStorage.getItem('kismet_current_user'));
+            let msgsHTML = "";
+
+            if (snapshot.empty) {
+                chatBox.innerHTML = "<p style='text-align:center; color:#94a3b8; margin:auto;'>Inicia la conversación...</p>";
+                return;
+            }
+
+            snapshot.forEach(docSnap => {
+                const m = docSnap.data();
+                const isMe = m.sender === currentUser.username;
+                msgsHTML += `
+                    <div class="chat-msg ${isMe ? 'me' : ''}">
+                        <div style="font-size: 9px; color: ${isMe ? '#c7d2fe' : '#818cf8'}; font-weight: bold; margin-bottom: 2px;">${m.senderName}</div>
+                        <div>${m.text}</div>
+                    </div>
+                `;
+            });
+
+            chatBox.innerHTML = msgsHTML;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    };
+
+    window.sendPrivateMessage = async function() {
+        const input = document.getElementById('chatroom-input');
+        const text = input.value.trim();
+        if (!text || !activeChatId) return;
+
+        const currentUser = JSON.parse(localStorage.getItem('kismet_current_user'));
+        input.value = "";
+
+        try {
+            await addDoc(collection(db, "chats", activeChatId, "messages"), {
+                text,
+                sender: currentUser.username,
+                senderName: currentUser.name,
+                createdAt: serverTimestamp()
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('chatroom-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendPrivateMessage();
+        });
+
+        const savedUser = JSON.parse(localStorage.getItem('kismet_current_user'));
+        if (savedUser) {
+            document.getElementById('home-username-tag').textContent = savedUser.username;
+            window.navigate('home');
+        } else {
+            window.navigate('register');
+        }
+    });
+</script>
+
+</body>
+</html>
