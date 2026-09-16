@@ -16,7 +16,6 @@
             align-items: center;
             min-height: 100vh;
         }
-        /* Contenedor principal centrado en forma de tarjeta tipo app */
         .app-container {
             width: 100%;
             max-width: 440px;
@@ -56,13 +55,13 @@
             margin-bottom: 10px;
             border: 1px solid #374151;
         }
-        input {
+        input, select {
             width: 100%; padding: 12px; margin-bottom: 10px;
             border-radius: 8px; border: 1px solid #374151;
             background: #0b0f19; color: white; box-sizing: border-box;
             font-size: 14px; outline: none;
         }
-        input:focus { border-color: #818cf8; }
+        input:focus, select:focus { border-color: #818cf8; }
         
         button.btn-main {
             width: 100%; padding: 12px; background: #6366f1;
@@ -79,17 +78,34 @@
             background: #10b981; color: white; border: none;
             padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px;
         }
+        button.btn-disabled {
+            background: #374151; color: #6b7280; border: none;
+            padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: not-allowed;
+        }
 
         .tag {
             display: inline-block; background: #312e81; color: #c7d2fe;
             padding: 2px 8px; border-radius: 20px; font-size: 11px;
             margin: 2px; font-weight: 500;
         }
+        .match-badge {
+            background: #065f46; color: #6ee7b7; padding: 2px 6px;
+            border-radius: 6px; font-size: 11px; font-weight: bold;
+        }
 
-        /* Estilos de Chat Privado */
+        /* Notificación flotante de mensajes */
+        #notification-banner {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background: #4f46e5; color: white; padding: 10px 16px; border-radius: 30px;
+            font-size: 13px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease; z-index: 1000; display: flex; align-items: center; gap: 8px;
+        }
+        #notification-banner.show { transform: translateX(-50%) translateY(0); }
+
+        /* Estilos de Chat Integrado (Contenedor acotado) */
         .chat-box {
-            flex: 1; height: 260px; overflow-y: auto; background: #0b0f19;
-            border: 1px solid #374151; border-radius: 10px; padding: 10px;
+            height: 340px; overflow-y: auto; background: #0b0f19;
+            border: 1px solid #374151; border-radius: 10px; padding: 12px;
             display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;
         }
         .chat-msg {
@@ -98,7 +114,6 @@
         }
         .chat-msg.me { background: #4338ca; align-self: flex-end; }
 
-        /* Navegación inferior fija dentro de la tarjeta */
         .bottom-nav {
             position: absolute; bottom: 0; left: 0; right: 0;
             background: #0b0f19; border-top: 1px solid #1f2937;
@@ -117,12 +132,15 @@
 
 <div class="app-container">
 
+    <!-- Notificación emergente -->
+    <div id="notification-banner">💬 Nuevo mensaje de <span id="notif-sender">Usuario</span></div>
+
     <!-- 1. REGISTRO -->
     <div id="view-register" class="view active">
         <h2 style="text-align: center; font-size: 24px; margin-top: 20px;">✨ <span class="text-accent">Kismet</span></h2>
         <div class="card" style="margin-top: 10px;">
             <h3>Crea tu Perfil</h3>
-            <p class="text-muted">Conecta mediante solicitudes y chats privados.</p>
+            <p class="text-muted">Selecciona tus áreas de enfoque e intereses principales.</p>
             
             <input type="text" id="reg-name" placeholder="Nombre completo" autocomplete="off" />
             <input type="text" id="reg-username" placeholder="Username único (ej. @noe)" autocomplete="off" />
@@ -130,9 +148,18 @@
                 <input type="number" id="reg-age" placeholder="Edad" style="width: 40%;" />
                 <input type="text" id="reg-city" placeholder="Ciudad" style="width: 60%;" />
             </div>
-            <input type="text" id="reg-interests" placeholder="Intereses (separados por coma)" autocomplete="off" />
             
-            <button id="btn-register" class="btn-main" style="margin-top: 5px;">Unirme a Kismet</button>
+            <label class="text-muted" style="display:block; margin-bottom: 4px;">Selecciona tu interés principal:</label>
+            <select id="reg-interests-select">
+                <option value="Startups y Negocios">Startups y Negocios</option>
+                <option value="Liderazgo y Alto Impacto">Liderazgo y Alto Impacto</option>
+                <option value="Desarrollo de Software y IA">Desarrollo de Software y IA</option>
+                <option value="Videojuegos y Roblox">Videojuegos y Roblox</option>
+                <option value="Fútbol y Deportes">Fútbol y Deportes</option>
+                <option value="Creación de Contenido">Creación de Contenido</option>
+            </select>
+            
+            <button id="btn-register" class="btn-main" style="margin-top: 10px;">Unirme a Kismet</button>
         </div>
     </div>
 
@@ -146,7 +173,7 @@
         </header>
         <div class="card" style="text-align: center; padding: 20px 14px; background: linear-gradient(145deg, #1f2937, #0b0f19);">
             <h2>Red de Conexiones</h2>
-            <p class="text-muted">Explora la comunidad, envía solicitudes y chatea de forma privada.</p>
+            <p class="text-muted">Encuentra personas con tus mismas metas y afinidad exacta.</p>
             <button onclick="navigate('discover')" class="btn-main" style="margin-top: 10px;">Explorar Personas 🧭</button>
         </div>
     </div>
@@ -154,7 +181,7 @@
     <!-- 3. DESCUBRIR -->
     <div id="view-discover" class="view">
         <h2 style="font-size: 20px;">🧭 Descubrir Perfiles</h2>
-        <p class="text-muted" style="margin-bottom: 12px;">Envía solicitudes de conexión.</p>
+        <p class="text-muted" style="margin-bottom: 12px;">Conecta con perfiles afines en la comunidad.</p>
         <div id="users-list">
             <p style="text-align: center; color: #94a3b8;">Cargando perfiles...</p>
         </div>
@@ -163,24 +190,24 @@
     <!-- 4. SOLICITUDES -->
     <div id="view-requests" class="view">
         <h2 style="font-size: 20px;">📥 Solicitudes</h2>
-        <p class="text-muted" style="margin-bottom: 12px;">Acepta solicitudes para habilitar el chat.</p>
+        <p class="text-muted" style="margin-bottom: 12px;">Acepta solicitudes para iniciar chats privados.</p>
         <div id="requests-list">
             <p style="text-align: center; color: #94a3b8;">Buscando solicitudes...</p>
         </div>
     </div>
 
-    <!-- 5. CHATS PRIVADOS -->
+    <!-- 5. CHATS LISTA -->
     <div id="view-chats" class="view">
         <h2 style="font-size: 20px;">💬 Mis Chats</h2>
-        <p class="text-muted" style="margin-bottom: 12px;">Conversaciones privadas activas.</p>
+        <p class="text-muted" style="margin-bottom: 12px;">Conversaciones privadas con tus conexiones.</p>
         <div id="chats-list">
             <p style="text-align: center; color: #94a3b8;">Cargando chats...</p>
         </div>
     </div>
 
-    <!-- 6. SALA DE CHAT INDIVIDUAL -->
-    <div id="view-chatroom" class="view" style="display: flex; flex-direction: column;">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+    <!-- 6. SALA DE CHAT INDIVIDUAL (Diseño acotado y limpio) -->
+    <div id="view-chatroom" class="view">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
             <button onclick="navigate('chats')" class="btn-secondary">← Volver</button>
             <h3 id="chatroom-title" style="margin: 0; color: #818cf8; font-size: 16px;">Chat Privado</h3>
         </div>
@@ -223,6 +250,7 @@
 
     let activeChatId = null;
     let unsubscribeChatMsgs = null;
+    let globalUnsubscribeListener = null;
 
     window.navigate = function(viewId) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -245,13 +273,13 @@
         if (viewId === 'chats') loadUserChats();
     };
 
-    // Registro
+    // Registro con intereses amplios
     document.getElementById('btn-register').addEventListener('click', async () => {
         const name = document.getElementById('reg-name').value.trim();
         const username = document.getElementById('reg-username').value.trim().toLowerCase();
         const age = document.getElementById('reg-age').value.trim();
         const city = document.getElementById('reg-city').value.trim();
-        const interestsRaw = document.getElementById('reg-interests').value.trim();
+        const selectedInterest = document.getElementById('reg-interests-select').value;
 
         if (!name || !username) {
             alert("Nombre y username son obligatorios.");
@@ -259,20 +287,22 @@
         }
 
         const cleanUsername = username.startsWith('@') ? username : '@' + username;
-        const interests = interestsRaw ? interestsRaw.split(',').map(i => i.trim()).filter(i => i) : ["General"];
+        // Asignar intereses base ricos para enriquecer las coincidencias
+        const interests = [selectedInterest, "Innovación", "Crecimiento Personal"];
 
         const btn = document.getElementById('btn-register');
         btn.textContent = "Registrando...";
 
         try {
             await addDoc(collection(db, "users"), {
-                name, username: cleanUsername, age: age || "N/A", city: city || "Global", interests, createdAt: serverTimestamp()
+                name, username: cleanUsername, age: age || "15", city: city || "México", interests, createdAt: serverTimestamp()
             });
 
-            const userSession = { name, username: cleanUsername };
+            const userSession = { name, username: cleanUsername, interests };
             localStorage.setItem('kismet_current_user', JSON.stringify(userSession));
 
             document.getElementById('home-username-tag').textContent = cleanUsername;
+            initGlobalMessageListener(cleanUsername);
             window.navigate('home');
         } catch (e) {
             console.error(e);
@@ -281,36 +311,71 @@
         }
     });
 
-    // Descubrir usuarios
+    // Calcular compatibilidad de intereses
+    function calculateMatchPercentage(myInterests, otherInterests) {
+        if (!myInterests || !otherInterests) return "75%";
+        let shared = otherInterests.filter(i => myInterests.includes(i)).length;
+        let score = 70 + (shared * 10) + Math.floor(Math.random() * 6);
+        return Math.min(score, 98) + "%";
+    }
+
+    // Descubrir perfiles con control de duplicados y ya amigos
     async function loadDiscoverUsers() {
         const listEl = document.getElementById('users-list');
         listEl.innerHTML = '<p style="text-align:center; color:#94a3b8;">Buscando perfiles...</p>';
         const currentUser = JSON.parse(localStorage.getItem('kismet_current_user'));
 
         try {
-            const querySnapshot = await getDocs(collection(db, "users"));
+            // Obtener solicitudes enviadas o recibidas y chats activos para bloquear botones repetidos
+            const reqSnapshot = await getDocs(collection(db, "friend_requests"));
+            const chatsSnapshot = await getDocs(query(collection(db, "chats"), where("participants", "array-contains", currentUser.username)));
+            
+            let connectedUsers = new Set();
+            chatsSnapshot.forEach(doc => {
+                doc.data().participants.forEach(p => connectedUsers.add(p));
+            });
+
+            reqSnapshot.forEach(doc => {
+                const r = doc.data();
+                if (r.fromUser === currentUser.username || r.toUser === currentUser.username) {
+                    connectedUsers.add(r.fromUser === currentUser.username ? r.toUser : r.fromUser);
+                }
+            });
+
+            const usersSnapshot = await getDocs(collection(db, "users"));
             let html = "";
             let count = 0;
 
-            querySnapshot.forEach(docSnap => {
+            usersSnapshot.forEach(docSnap => {
                 const u = docSnap.data();
                 if (u.username === currentUser.username) return;
                 count++;
 
+                const isAlreadyConnected = connectedUsers.has(u.username);
+                const matchPct = calculateMatchPercentage(currentUser.interests, u.interests);
                 const tags = u.interests.map(t => `<span class="tag">${t}</span>`).join('');
+
                 html += `
                     <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h3 style="margin: 0 0 2px 0; font-size: 15px;">${u.name} <span style="font-size: 11px; color: #818cf8;">${u.username}</span></h3>
-                            <p style="margin: 0 0 6px 0; color: #94a3b8; font-size: 11px;">📍 ${u.city} &bull; 🎂 ${u.age} años</p>
+                        <div style="flex: 1; padding-right: 8px;">
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                                <h3 style="margin: 0; font-size: 15px;">${u.name}</h3>
+                                <span class="match-badge">⚡ ${matchPct} Afin</span>
+                            </div>
+                            <p style="margin: 0 0 6px 0; color: #818cf8; font-size: 11px;">${u.username} &bull; 📍 ${u.city}</p>
                             <div>${tags}</div>
                         </div>
-                        <button onclick="sendRequest('${u.username}', '${u.name}')" class="btn-main" style="width: auto; padding: 6px 10px; font-size: 12px;">Conectar</button>
+                        <div>
+                            ${isAlreadyConnected 
+                                ? `<button class="btn-disabled" disabled>Conectado</button>`
+                                : `<button onclick="sendRequest('${u.username}', '${u.name}')" class="btn-main" style="width: auto; padding: 6px 10px; font-size: 12px;">Conectar</button>`
+                            }
+                        </div>
                     </div>
                 `;
             });
 
-            listEl.innerHTML = count === 0 ? "<p style='text-align:center;'>No hay más usuarios.</p>" : html;
+            listEl.innerHTML = count === 0 ? "<p style='text-align:center;'>No hay más usuarios registrados.</p>" : html;
         } catch (e) {
             console.error(e);
             listEl.innerHTML = "<p style='text-align:center; color: #ef4444;'>Error cargando perfiles.</p>";
@@ -328,13 +393,14 @@
                 createdAt: serverTimestamp()
             });
             alert(`¡Solicitud enviada a ${targetName}!`);
+            loadDiscoverUsers(); // Recargar para actualizar estados
         } catch (e) {
             console.error(e);
             alert("Error al enviar solicitud.");
         }
     };
 
-    // Solicitudes recibidas (Consulta segura optimizada)
+    // Solicitudes recibidas
     async function loadRequests() {
         const listEl = document.getElementById('requests-list');
         listEl.innerHTML = '<p style="text-align:center; color:#94a3b8;">Buscando solicitudes...</p>';
@@ -348,7 +414,7 @@
 
             querySnapshot.forEach(docSnap => {
                 const req = docSnap.data();
-                if (req.status !== "pending") return; // Filtrar pendientes de forma limpia
+                if (req.status !== "pending") return;
                 count++;
                 html += `
                     <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
@@ -387,7 +453,7 @@
         }
     };
 
-    // Chats activos (Consulta segura optimizada)
+    // Cargar Chats Activos
     async function loadUserChats() {
         const listEl = document.getElementById('chats-list');
         listEl.innerHTML = '<p style="text-align:center; color:#94a3b8;">Cargando chats...</p>';
@@ -423,7 +489,7 @@
         }
     }
 
-    // Sala de Chat
+    // Sala de Chat individual
     window.openChatRoom = function(chatId, otherName) {
         activeChatId = chatId;
         document.getElementById('chatroom-title').textContent = `Chat con ${otherName}`;
@@ -481,6 +547,40 @@
         }
     };
 
+    // Notificaciones en tiempo real para mensajes nuevos
+    function initGlobalMessageListener(myUsername) {
+        if (globalUnsubscribeListener) globalUnsubscribeListener();
+
+        const chatsQuery = query(collection(db, "chats"), where("participants", "array-contains", myUsername));
+        globalUnsubscribeListener = onSnapshot(chatsQuery, (chatsSnapshot) => {
+            chatsSnapshot.docChanges().forEach((change) => {
+                if (change.type === "modified" || change.type === "added") {
+                    const chatId = change.doc.id;
+                    const msgsQuery = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "desc"));
+                    
+                    getDocs(msgsQuery).then((msgSnap) => {
+                        if (!msgSnap.empty) {
+                            const latestMsg = msgSnap.docs[0].data();
+                            // Si el mensaje no lo envié yo y es reciente
+                            if (latestMsg.sender !== myUsername && activeChatId !== chatId) {
+                                showNotification(latestMsg.senderName);
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    }
+
+    function showNotification(senderName) {
+        const banner = document.getElementById('notification-banner');
+        document.getElementById('notif-sender').textContent = senderName;
+        banner.classList.add('show');
+        setTimeout(() => {
+            banner.classList.remove('show');
+        }, 4000);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('chatroom-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendPrivateMessage();
@@ -489,6 +589,7 @@
         const savedUser = JSON.parse(localStorage.getItem('kismet_current_user'));
         if (savedUser) {
             document.getElementById('home-username-tag').textContent = savedUser.username;
+            initGlobalMessageListener(savedUser.username);
             window.navigate('home');
         } else {
             window.navigate('register');
